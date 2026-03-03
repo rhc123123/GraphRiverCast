@@ -26,6 +26,7 @@
 
 ## 📑 Table of Contents
 
+- [🚀 Quick Start](#-quick-start)
 - [🌊 Overview](#-overview)
 - [🏗️ Model Architecture](#%EF%B8%8F-model-architecture)
 - [📊 Global Performance](#-global-performance)
@@ -37,6 +38,34 @@
 - [📄 Citation](#-citation)
 - [📜 License](#-license)
 - [🙏 Acknowledgments](#-acknowledgments)
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 1. Clone and enter the repo
+git clone https://github.com/rhc123123/GraphRiverCast.git
+cd GraphRiverCast
+
+# 2. Set up the environment (auto-detects GPU & CUDA)
+chmod +x scripts/setup_unix.sh && ./scripts/setup_unix.sh   # Linux / WSL
+# or: ./scripts/setup_macos.sh                               # macOS
+# or: scripts\setup_windows.bat                              # Windows (Anaconda Prompt)
+
+# 3. Activate
+source .venv/bin/activate        # Linux / macOS
+# or: conda activate grc         # Windows
+
+# 4. Run inference (Upper Danube example, GRC-HotStart)
+python src/inference.py \
+    --ckpt   checkpoints/Pre-train/GRC_HotStart/Group_16.ckpt \
+    --data-dir data \
+    --group  LamaH_CE_06min_obs2000_2017 \
+    --device cuda                # or: mps (Mac) / cpu
+```
+
+> See [Environment Setup](#%EF%B8%8F-environment-setup) for detailed platform-specific instructions and [Data Preparation](#-data-preparation) for preparing your own basin data.
 
 ---
 
@@ -678,10 +707,10 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
-- **GRDC** — Global Runoff Data Centre: discharge observations used in fine-tuning evaluation
 - **CaMa-Flood** — Yamazaki et al.: physics-based global river model; pre-training target and baseline
 - **MERIT Hydro** — river network topology and static geomorphic features
-- **LamaH-CE** — Klingler et al. (2021): Upper Danube observation dataset
 - **GRADES** — Lin et al. (2019): bias-corrected global runoff forcing
+- **GRDC** — Global Runoff Data Centre: discharge observations used in fine-tuning evaluation
+- **LamaH-CE** — Klingler et al. (2021): Upper Danube observation dataset
 - **PyTorch Geometric** — graph neural-network library
 - **PyTorch Lightning** — original training framework

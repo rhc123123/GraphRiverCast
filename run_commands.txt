@@ -1,0 +1,111 @@
+============================================================
+  GraphRiverCast - 环境安装 / 激活 / 推理 / 微调 命令
+============================================================
+
+------------------------------------------------------------
+[Step 1] 进入项目目录（后续所有命令都在这里执行）
+------------------------------------------------------------
+cd /home/wsl_5090d/rhc/Global-River-System-Modelling-with-GNN/GraphRiverCast
+
+
+------------------------------------------------------------
+[Step 2] 安装环境（只需要跑一次）
+------------------------------------------------------------
+# 注意：WSL2 里 nvidia-smi 放在 /usr/lib/wsl/lib/，
+# setup_unix.sh 默认找不到它，会装 CPU 版 torch。
+# 所以先把路径加进去，再跑 setup。
+
+export PATH="/usr/lib/wsl/lib:$PATH"
+chmod +x scripts/setup_unix.sh
+./scripts/setup_unix.sh
+
+
+------------------------------------------------------------
+[Step 3] 激活环境（每次新开终端都要跑这个）
+------------------------------------------------------------
+source .venv/bin/activate
+
+# 成功后提示符会变成：(grc) ...
+
+
+------------------------------------------------------------
+[Step 4] 验证安装是否正确
+------------------------------------------------------------
+python -c "
+import torch, torch_geometric
+print('PyTorch:        ', torch.__version__)
+print('PyG:            ', torch_geometric.__version__)
+print('CUDA available: ', torch.cuda.is_available())
+if torch.cuda.is_available():
+    print('GPU:            ', torch.cuda.get_device_name(0))
+"
+
+
+------------------------------------------------------------
+[Step 5] 执行推理（Inference / HotStart）
+------------------------------------------------------------
+python src/inference.py \
+  --ckpt     checkpoints/Pre-train/GRC_HotStart/Group_1.ckpt \
+  --data-dir data \
+  --group    LamaH_CE_06min_obs2000_2017 \
+  --start    2009-01-01 \
+  --hist     365 \
+  --future   2922 \
+  --device   cuda \
+  --save-dir results
+
+# 输出会自动保存到 results/ 下带时间戳的子目录里
+# 包含：prediction.npy / groundtruth.npy / meta.json
+
+
+------------------------------------------------------------
+[Step 6] 执行微调（Fine-tune / ColdStart）
+------------------------------------------------------------
+# 注意：微调必须用 ColdStart checkpoint，不能用 HotStart
+
+python src/finetune.py \
+  --ckpt            checkpoints/Pre-train/GRC_ColdStart/Group_1.ckpt \
+  --data-dir        data \
+  --group           LamaH_CE_06min_obs2000_2017 \
+  --save-dir        results/finetune \
+  --train-start     2000-01-01 \
+  --train-end       2009-12-31 \
+  --val-start       2010-01-01 \
+  --val-end         2017-12-31 \
+  --freeze-profile  p4_add_featmix \
+  --hist            14 \
+  --future          14 \
+  --batch-size      16 \
+  --epochs          50 \
+  --lr              1e-4 \
+  --device          cuda
+
+# 微调完成后 best model 保存到：results/finetune/best_model.pt
+
+
+============================================================
+  常见问题排查
+============================================================
+
+[Q] setup_unix.sh 跑完后 CUDA available 是 False？
+[A] 很可能是 nvidia-smi 没检测到，装了 CPU 版 torch。
+    手动替换：
+        source .venv/bin/activate
+        uv pip uninstall torch torchvision
+        uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+[Q] nvidia-smi 找不到？
+[A] 它在 /usr/lib/wsl/lib/nvidia-smi，运行：
+        /usr/lib/wsl/lib/nvidia-smi
+
+[Q] --group 参数怎么填？
+[A] 数据目录名是 LamaH_CE_06min_obs2000_2017（06min 前有下划线）。
+    代码里默认值写的 LamaH_CE06min_obs2000_2017（少了下划线），是错误的。
+    必须手动传入正确的 --group。
+
+[Q] checkpoint 怎么选 Group 编号？
+[A] 打开 group_lookup.html（浏览器打开），输入目标经纬度即可查找。
+
+[Q] 微调为什么要用 ColdStart 而不是 HotStart？
+[A] ColdStart 模型不能靠初始状态做捷径，必须学完整的 runoff→streamflow 映射，
+    泛化能力更强。论文全部微调实验都用 ColdStart。

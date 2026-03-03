@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Data, checkpoints, and results (large files)
+data/
+checkpoints/
+results/
+Figures/
+analysis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
